@@ -322,48 +322,25 @@ public class Perceptron {
 
 			int[][] method_bg = generate_individuals(src,ref,weights);
 			
-			Vector<Double> paras_method = get_paras_vectors(src, ref, method_bg,len);
-			Vector<Double> paras_manual = get_paras_vectors(src, ref, manual_bg,len);
+			Vector<Double> paras_method = FlxmUtil.calViolations(src, ref, method_bg);
+			Vector<Double> paras_manual = FlxmUtil.calViolations(src, ref, manual_bg);
 
-			//double gradient_w0 = sigmoid(VecUtil.dotProduct(weights, paras_method)+b-manual)
-			//		*sigmoid(VecUtil.dotProduct(weights, paras_method)+b)
-			//		*(1-sigmoid(VecUtil.dotProduct(weights, paras_method)+b))*paras_method.get(0);
 			
 			Vector<Double> gradient = new Vector<>();
-			double cur_grad = VecUtil.dotProduct(weights, paras_method)+b-VecUtil.dotProduct(weights, paras_manual);
-			
-			for(int i=0;i<len;i++){
-				//gradient.add(0-cur_grad*alpha*paras_method.get(i));
-				gradient.add(0-cur_grad*paras_method.get(i));
+			for(int i =0;i<paras_manual.size();i++) {
+				//grad = -(y-f)*f
+				double grad = weights.get(i)*(paras_manual.get(i)-paras_method.get(i))*paras_method.get(i);
+				double step = alpha*(0-grad);
+				gradient.add(step);
 			}
-			
-			/*alpha = LineSearch(gradient, len, weights, paras_method, paras_manual);
-			System.out.println("alpha = " + alpha);*/
-			
-			Vector<Double> new_gradient = new Vector<>();
-
-			
-			for(int i=0;i<len;i++){
-				new_gradient.add(gradient.get(i)*alpha);
-			}
-			
-			weights = VecUtil.add(weights, new_gradient);
-			
+			weights = VecUtil.add(weights, gradient);
 			if (counter%10 == 1) alpha *= 0.7;
-			
 			counter++;
 			
-			System.out.print("weight: ");
-			for(int i=0; i<len; i++)
-				System.out.print(weights.get(i) + " ");
-			
-			System.out.print("\n");
-			
-			System.out.print("grad: ");
-			for(int i=0; i<len; i++)
-				System.out.print(gradient.get(i) + " ");
-			
-			System.out.print("\n");
+			System.out.println("diff="+bgDiff(method_bg, manual_bg));
+			print(paras_method,"para_method:\n");
+			print(paras_manual,"para_man:\n");
+			print(weights, "weights");
 		}
 		
 		return weights;
@@ -553,6 +530,8 @@ public class Perceptron {
 			
 			Vector<Double> gradient = new Vector<>();
 			
+			Vector<Double> w_2 = VecUtil.getVec(weights.size());
+			VecUtil.eval(w_2, 1);
 			Vector<Double> y = VecUtil.sigmoid(weights, paras_manual);
 			Vector<Double> predict = VecUtil.sigmoid(weights, paras_method);
 			
@@ -587,7 +566,7 @@ public class Perceptron {
 			
 			//print(new_gradient, "newGrad:\n");
 			//print(weights,"weight:\n");
-			//print(gradient,"grad:\n");
+			print(gradient,"grad:\n");
 			
 //			System.out.println("minDiff: " + minDiff);
 //			print(minW, "min_weight:\n");
@@ -658,57 +637,56 @@ public class Perceptron {
 	
 	public static void main(String[] args) throws IOException, SQLException {		
 		
-		
-		String[] _srcpage = {"tar1"};
-		String[] _refpage = {"ref2"};
-		
-		Elem[][] src1 = new Elem [_srcpage.length][];
-		Elem[][] ref1 = new Elem [_refpage.length][];
-		Elem[][] man1 = new Elem [_srcpage.length][];
-		int[][][] bg1 = new int  [_srcpage.length][][];
-		
-		Connection conn = DBConnect.getConnect();
-		
-		for (int i=0; i<_srcpage.length; i++) {
-			String srcImg = "img/" + _srcpage[i] + ".png";
-			String refImg = "img/" + _refpage[i] + ".png";
-			String manual = _srcpage[i]+"_"+ _refpage[i]+"_me";
-			
-//			src1[i] = (Elem[]) Util.getElems(srcImg, "select * from "+_srcpage[i]+"_"+_refpage[i]+" where isZero=0", conn).toArray(new Elem[1]);
-//			ref1[i] = (Elem[]) Util.getElems(refImg, "select * from "+_refpage[i]+" where isZero=0", conn).toArray(new Elem[1]);
-//			man1[i] = (Elem[]) Util.getElems(srcImg, "select * from "+manual+" where isZero=0", conn).toArray(new Elem[1]);
-			
-			
-			src1[i] = Util.getElemsArray(srcImg, "select * from "+_srcpage[i]+"_"+_refpage[i]+" where isZero=0", conn);
-			ref1[i] = Util.getElemsArray(refImg, "select * from "+_refpage[i]+" where isZero=0", conn);
-			man1[i] = Util.getElemsArray(srcImg, "select * from "+manual+" where isZero=0", conn);
-			
-			bg1[i] = GraphUtil.getBinaryGraph(man1[i], ref1[i], true);
-			System.out.println("bg finished...");
-			int len = Compare.getProperties(src1[0][0]).size()+3;
-			Vector<Double> theta = VecUtil.getVec(len);
-			VecUtil.eval(theta, 1);
-			theta.set( theta.size()-1 , 3.0);
-			int max_iter = 10;
-			System.out.println(bg1[i].length+" "+bg1[i][0].length);
-			for (int m=0; m<max_iter; m++) {
-				for (int j=0; j<_srcpage.length; j++) {
+//		
+//		String[] _srcpage = {"tar5"};
+//		String[] _refpage = {"ref5"};
+//		
+//		Elem[][] src1 = new Elem [_srcpage.length][];
+//		Elem[][] ref1 = new Elem [_refpage.length][];
+//		Elem[][] man1 = new Elem [_srcpage.length][];
+//		int[][][] bg1 = new int  [_srcpage.length][][];
+//		
+//		Connection conn = DBConnect.getConnect();
+//		
+//		for (int i=0; i<_srcpage.length; i++) {
+//			String srcImg = "img/" + _srcpage[i] + ".png";
+//			String refImg = "img/" + _refpage[i] + ".png";
+//			String manual = _srcpage[i]+"_"+ _refpage[i]+"_me";
+//			
+////			src1[i] = (Elem[]) Util.getElems(srcImg, "select * from "+_srcpage[i]+"_"+_refpage[i]+" where isZero=0", conn).toArray(new Elem[1]);
+////			ref1[i] = (Elem[]) Util.getElems(refImg, "select * from "+_refpage[i]+" where isZero=0", conn).toArray(new Elem[1]);
+////			man1[i] = (Elem[]) Util.getElems(srcImg, "select * from "+manual+" where isZero=0", conn).toArray(new Elem[1]);
+//			
+//			
+//			src1[i] = Util.getElemsArray(srcImg, "select * from "+_srcpage[i]+"_"+_refpage[i]+" where isZero=0", conn);
+//			ref1[i] = Util.getElemsArray(refImg, "select * from "+_refpage[i]+" where isZero=0", conn);
+//			man1[i] = Util.getElemsArray(srcImg, "select * from "+manual+" where isZero=0", conn);
+//			
+//			bg1[i] = GraphUtil.getBinaryGraph(man1[i], ref1[i], true);
+//			System.out.println("bg finished...");
+//			int len = Compare.getProperties(src1[0][0]).size()+3;
+//			Vector<Double> theta = VecUtil.getVec(len);
+//			VecUtil.eval(theta, 1);
+//			theta.set( theta.size()-1 , 3.0);
+//			int max_iter = 10;
+//			System.out.println(bg1[i].length+" "+bg1[i][0].length);
+//			for (int m=0; m<max_iter; m++) {
+//				for (int j=0; j<_srcpage.length; j++) {
 //					theta = getTheta(theta, src1[j], ref1[j], bg1[j], 1000,null);
-					theta = gd3(theta, src1[j], ref1[j], bg1[i], 30);
-					String info = "";
-					for(int k=0;k<theta.size();k++){
-						info+=theta.get(k)+",";
-					}
-					System.out.println("grad:" + m + ":" + info);
-				}
-			}
-		}
+////					theta = gd(theta, src1[j], ref1[j], bg1[i], 3000);
+//					String info = "";
+//					for(int k=0;k<theta.size();k++){
+//						info+=theta.get(k)+",";
+//					}
+//					System.out.println("grad:" + m + ":" + info);
+//				}
+//			}
+//		}
 		
 		
-		/*
 		
-		String srcpage = "tar1";
-		String refpage = "ref2";
+		String srcpage = "tar5";
+		String refpage = "ref5";
 		String srcImg = "img/" + srcpage + ".png";
 		String refImg = "img/" + refpage + ".png";
 		String manual = srcpage+"_"+refpage+"_me";
@@ -720,7 +698,7 @@ public class Perceptron {
 		
 		test();
 		evaluation_v2(src, man, ref);
-		*/
+//		
 		 
 	}
 	
@@ -838,14 +816,16 @@ public class Perceptron {
 		Vector<Double> weights = new Vector<>();
 //		double[] theta = {2.0565172770604447, -2.4916939663541164, -6.9893194712642925, 0.8590058647421877, -0.5790484997876924, -7.990612170979992, -1.2352197667012121, 1.0, 1.0, 14.563390587933155, 1.0, 2.2566114926721346, 15.46201692829746, 1.0, 9.54753626572242, -6.287951612318866, 2.0985707422990787, 9.953570335060437, 13.283048509656808, 1.4222656735732657, 1.1370619989191928, 1.0, 1.0, 1.0, 1.0, 1.0, -4.345207966262257, 1.0, 6.225933497475607, 6.225933497475607, 62.717638365466094, 18.37246150858046, 21.64844534895708};
 		
-		double[] theta = {1.0000000000000013,1.9000000000000148,1.0000000000000013,2.000000000000001,1.0,1.0,1.0,1.0,1.0,2.0,1.0,2.0,1.9000000000000001,1.0,1.0,1.0,1.0,1.9000000000000121,1.900000000000014,2.0,1.9000000000000148,1.0,1.0,1.0,1.0,1.0,1.9000000000000135,1.0,1.0,1.0,1.0,2.9000000000000132,10.900000000000013};
+//		double[] theta = {1.0000000000000013,1.9000000000000148,1.0000000000000013,2.000000000000001,1.0,1.0,1.0,1.0,1.0,2.0,1.0,2.0,1.9000000000000001,1.0,1.0,1.0,1.0,1.9000000000000121,1.900000000000014,2.0,1.9000000000000148,1.0,1.0,1.0,1.0,1.0,1.9000000000000135,1.0,1.0,1.0,1.0,2.9000000000000132,10.900000000000013};
 //		double[] theta = {4.000845053248746, -4.0810424768944475E-4, -4.0810424768944475E-4, -4.0810424768944475E-4, -4.0810424768944475E-4, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, -4.0810424768944475E-4, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, -4.0810424768944475E-4, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 6.000845053248746}; 
 
+//		double [] theta= {4.501323086381922, 6.400150379495874, -2.169113782552403, 8.07041748726603, -9.241025723039911, -15.855522818602152, -2.9658413633337113, 1.0, 1.0, 13.684717211196691, 1.0, -6.146945540060568, 8.742982952359428, 1.0, -15.249634936346201, -19.0020649723925, -4.9763019500868495, 10.190186839196945, 10.610262299012135, -3.3364258385905465, 4.772523848084024, 1.0, 1.0, 1.0, 1.0, 1.0, -5.464795810437314, 1.0, 6.458838777082993, 6.458838777082993, 11.776871820045557, -0.9244273537661711, 5.434025250303517};
+		double [] theta = {8.680882212353263, 34.373867717118344, 26.817852784685027, 58.732085053074556, -117.26832742375562, -21.531028428904854, -128.88968038202879, 1.0, 1.0, -123.03186466914327, 1.0, -45.890981387648935, 28.14093789783506, 1.0, -385.8631706097662, -123.88197903775067, 86.23637061019961, 67.92665554895228, 92.29544668887722, 26.554725228319125, 18.163720083337076, 3.5689141007523464, 1.0, 1.0, 1.0, 1.0, -52.87280720285459, 1.0, 1.0, 1.0, -9.251469991877059, 1179.5336643898793, 705.1357111911458};
 		for(int i=0;i<theta.length;i++) {
 			weights.add(theta[i]);
 		}
-		String srcpage = "tar1", srcImg = "img/tar1.png";
-		String refpage = "ref2", refImg = "img/ref2.png";
+		String srcpage = "tar5", srcImg = "img/tar5.png";
+		String refpage = "ref5", refImg = "img/ref5.png";
 //		String manual = srcpage+"_"+refpage+"_me";
 		Connection conn = DBConnect.getConnect();
 		Elem[] src =  Util.getElemsArray(srcImg, "select * from "+srcpage+" where isZero=0", conn);

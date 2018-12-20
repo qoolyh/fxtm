@@ -14,7 +14,7 @@ import training.FlxmUtil;
 
 public class FXM_v2 {
 	private final static double gamma = 0.7;
-	private final static int iter_num = 200;
+	private final static int iter_num = 100;
 
 	/**
 	 * Sort the array by lower bound and upper bound. e.g. (1,2),(1,3),(2,2)
@@ -174,12 +174,12 @@ public class FXM_v2 {
 						--bg[i][j].edge.src_upper_sibD;
 						int tmp = bg[i][j].edge.ref_upper_sibD;
 						--bg[i][j].edge.ref_upper_sibD;
-						if(bg[i][j].edge.ref_upper_sibD==0){
-							System.out.println("sib-sib");
-							System.out.println("zero======"+src[bg[i][j].edge.getSrc()].getId()+" "+ref[bg[i][j].edge.getRef()].getId());
-							System.out.println("info....."+sib_i.size()+" "+sib_j.size());
-							System.out.println("before.."+tmp);
-						}
+//						if(bg[i][j].edge.ref_upper_sibD==0){
+//							System.out.println("sib-sib");
+//							System.out.println("zero======"+src[bg[i][j].edge.getSrc()].getId()+" "+ref[bg[i][j].edge.getRef()].getId());
+//							System.out.println("info....."+sib_i.size()+" "+sib_j.size()+" i="+i+" j="+j);
+//							System.out.println("before.."+tmp);
+//						}
 						bg[i][j].edge.setCost(visDis[i][j], weights);
 					}
 				}
@@ -189,10 +189,10 @@ public class FXM_v2 {
 				for (int j = 0; j < bg[si].length-1; j++) {
 					if (!bg[si][j].decided && !sib_j.contains(j)) {
 						--bg[si][j].srcSibNum;
-						int tmp = bg[si][j].edge.ref_upper_sibD;
+						int tmp = bg[si][j].edge.src_upper_sibI;
 						--bg[si][j].edge.src_upper_sibI;
 						++bg[si][j].edge.src_lower_sibD;
-						if(bg[si][j].edge.ref_upper_sibD==0){
+						if(tmp==0){
 							System.out.println("sib-non-sib");
 							System.out.println("zero======"+src[bg[si][j].edge.getSrc()].getId()+" "+ref[bg[si][j].edge.getRef()].getId());
 							System.out.println("info....."+sib_i.size()+" "+sib_j.size());
@@ -400,6 +400,7 @@ public class FXM_v2 {
 		// case 1. bg is a full bigraph
 		// case 2. bg is a semi-bigraph, some edges are already decided
 		initBg(bg, src, ref, weights, visDis);
+//		print(bg,src,ref);
 		for(int i=0;i<bg.length;i++){
 			for(int j=0;j<bg[i].length;j++){
 				Edge e = bg[i][j].edge;
@@ -824,7 +825,7 @@ public class FXM_v2 {
 						// 2. the bounds of I(e)
 						int ui_ij = src[i].getSiblings().size() + 1 - candidates_si.size() + vi, 
 								li_ij = 1 + vi,
-								ui_ji = src[i].getSiblings().size() + 1 - candidates_si.size() + vi, 
+								ui_ji = ref[j].getSiblings().size() + 1 - candidates_sj.size() + vi, 
 								li_ji = 1 + vi;
 						double upper_sib = weight_sib / 2 * ((double) ud_ij / li_ij + (double) ud_ji / li_ji),
 								lower_sib = weight_sib * ((double) ld_ij / ((ui_ij * (ld_ij + 1)))
