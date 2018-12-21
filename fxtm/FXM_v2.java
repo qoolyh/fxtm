@@ -14,7 +14,7 @@ import training.FlxmUtil;
 
 public class FXM_v2 {
 	private final static double gamma = 0.7;
-	private final static int iter_num = 100;
+	private final static int iter_num = 20;
 
 	/**
 	 * Sort the array by lower bound and upper bound. e.g. (1,2),(1,3),(2,2)

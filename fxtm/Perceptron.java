@@ -262,11 +262,38 @@ public class Perceptron {
 			v2 = 0;
 			v3 = 0;
 			
-			Vector<Double> y1 = VecUtil.sigmoid(weights, paras_method);
-			Vector<Double> predict1 = VecUtil.sigmoid(weights, paras_manual);
+//			Vector<Double> y1 = VecUtil.sigmoid(weights, paras_method);
+//			Vector<Double> predict1 = VecUtil.sigmoid(weights, paras_manual);
+//			
+//			Vector<Double> y2 = VecUtil.sigmoid(new_weight, paras_method);
+//			Vector<Double> predict2 = VecUtil.sigmoid(new_weight, paras_manual);
 			
-			Vector<Double> y2 = VecUtil.sigmoid(new_weight, paras_method);
-			Vector<Double> predict2 = VecUtil.sigmoid(new_weight, paras_manual);
+			
+			Vector<Double> w_2 = VecUtil.getVec(weights.size());
+			VecUtil.eval(w_2, 1);
+			w_2.set(0, 1.0/20);
+			w_2.set(1, 1.0/20);
+			w_2.set(2, 1.0/20);
+			w_2.set(3, 1.0/20);
+			w_2.set(4, 1.0/20);
+			w_2.set(9, 1.0/20);
+			w_2.set(11, 1.0/40);
+			w_2.set(12, 1.0/40);
+			w_2.set(14, 1.0/20);
+			w_2.set(15, 1.0/20);
+			w_2.set(16, 1.0/10);
+			w_2.set(17, 1.0/20);
+			w_2.set(18, 1.0/20);
+			Vector<Double> predict = VecUtil.sigmoid(w_2, paras_manual);
+			Vector<Double> y = VecUtil.sigmoid(w_2, paras_method);
+			
+			Vector<Double> y1 = VecUtil.multiply(weights, y);
+			Vector<Double> y2 = VecUtil.multiply(new_weight, y);
+			
+			Vector<Double> predict1 = VecUtil.multiply(weights, predict);
+			Vector<Double> predict2 = VecUtil.multiply(new_weight, predict);
+			
+			
 
 			for (int i=0; i<length; i++) {
 				
@@ -286,7 +313,7 @@ public class Perceptron {
 			++iter;
 		} 
 		
-//		System.out.println("alpha: " + alpha);
+	System.out.println("alpha: " + alpha);
 		
 		
 		return new_weight;
@@ -579,6 +606,94 @@ public class Perceptron {
 		return weights;
 	}
 	
+	public static Vector<Double> gd_sigmoidWithoutWeight(Vector<Double> theta, Elem[] src, Elem[] ref, int[][] manual_bg, int max_iter){
+		//iteration 1st
+		int len = Compare.getProperties(src[0]).size()+3; 
+		/*Vector<Double> weights = VecUtil.getVec(len);
+		VecUtil.eval(weights,1);*/
+		
+		Vector<Double> weights = theta;
+		
+		double alpha = 1;
+
+		int max_iter_num = max_iter, counter = 0;
+		
+		int minDiff = 1000;
+		Vector<Double> minW = new Vector<Double>();
+		
+		while(counter!=max_iter_num){
+			
+			System.out.println(counter+"th.....  ");
+			int[][] method_bg = generate_individuals(src,ref,weights);
+	
+			
+			Vector<Double> paras_method = FlxmUtil.calViolations(src, ref, method_bg); //todo  normalize
+			Vector<Double> paras_manual = FlxmUtil.calViolations(src, ref, manual_bg); //todo
+			
+			
+			Vector<Double> gradient = new Vector<>();
+			
+			Vector<Double> w_2 = VecUtil.getVec(weights.size());
+			VecUtil.eval(w_2, 1);
+			w_2.set(0, 1.0/20);
+			w_2.set(1, 1.0/20);
+			w_2.set(2, 1.0/20);
+			w_2.set(3, 1.0/20);
+			w_2.set(4, 1.0/20);
+			w_2.set(9, 1.0/20);
+			w_2.set(11, 1.0/40);
+			w_2.set(12, 1.0/40);
+			w_2.set(14, 1.0/20);
+			w_2.set(15, 1.0/20);
+			w_2.set(16, 1.0/10);
+			w_2.set(17, 1.0/20);
+			w_2.set(18, 1.0/20);
+			Vector<Double> y = VecUtil.sigmoid(w_2, paras_manual);
+			Vector<Double> predict = VecUtil.sigmoid(w_2, paras_method);
+			
+//			System.out.println("diff="+bgDiff(method_bg, manual_bg));
+			print(predict,"pre:\n");
+			print(y,"y:\n");
+			
+			
+			for(int i=0;i<paras_manual.size();i++){
+				double grad = (y.get(i)*weights.get(i)-predict.get(i)*weights.get(i))*paras_manual.get(i);
+				gradient.add(alpha*(0-grad));
+			}
+			
+			//print(y,"y1111:\n");
+			//print(predict, "predict:\n");
+			
+//			for (int i=0; i<len; i++) {
+//				gradient.add( (y.get(i)-predict.get(i))*( y.get(i)*(1-y.get(i))*paras_manual.get(i) - predict.get(i)*(1-predict.get(i))*paras_method.get(i) ) );
+//			}
+
+//			print(gradient, "gradient:\n");
+			
+			
+			
+			Vector<Double> new_weight = LineSearch(gradient, len, weights, paras_method, paras_manual);;
+			
+			weights = new_weight;
+
+			
+			
+			
+			//print(new_gradient, "newGrad:\n");
+			System.out.println("diff="+bgDiff(method_bg, manual_bg));
+			print(gradient, "grad:\n");
+			print(paras_method,"para_method:\n");
+			print(paras_manual,"para_man:\n");
+			print(weights, "weights");
+			
+			
+		}
+		
+		
+		
+		return weights;
+	}
+	
 //	public static void main(String[] args) throws IOException, SQLException {
 //		String webDriverName = "webdriver.firefox.bin"; 
 //		String firefoxPath = "D:/coding/Mozilla Firefox/firefox.exe"; // this requires you install a firefox
@@ -637,67 +752,67 @@ public class Perceptron {
 	
 	public static void main(String[] args) throws IOException, SQLException {		
 		
-//		
-//		String[] _srcpage = {"tar5"};
-//		String[] _refpage = {"ref5"};
-//		
-//		Elem[][] src1 = new Elem [_srcpage.length][];
-//		Elem[][] ref1 = new Elem [_refpage.length][];
-//		Elem[][] man1 = new Elem [_srcpage.length][];
-//		int[][][] bg1 = new int  [_srcpage.length][][];
-//		
-//		Connection conn = DBConnect.getConnect();
-//		
-//		for (int i=0; i<_srcpage.length; i++) {
-//			String srcImg = "img/" + _srcpage[i] + ".png";
-//			String refImg = "img/" + _refpage[i] + ".png";
-//			String manual = _srcpage[i]+"_"+ _refpage[i]+"_me";
-//			
-////			src1[i] = (Elem[]) Util.getElems(srcImg, "select * from "+_srcpage[i]+"_"+_refpage[i]+" where isZero=0", conn).toArray(new Elem[1]);
-////			ref1[i] = (Elem[]) Util.getElems(refImg, "select * from "+_refpage[i]+" where isZero=0", conn).toArray(new Elem[1]);
-////			man1[i] = (Elem[]) Util.getElems(srcImg, "select * from "+manual+" where isZero=0", conn).toArray(new Elem[1]);
-//			
-//			
-//			src1[i] = Util.getElemsArray(srcImg, "select * from "+_srcpage[i]+"_"+_refpage[i]+" where isZero=0", conn);
-//			ref1[i] = Util.getElemsArray(refImg, "select * from "+_refpage[i]+" where isZero=0", conn);
-//			man1[i] = Util.getElemsArray(srcImg, "select * from "+manual+" where isZero=0", conn);
-//			
-//			bg1[i] = GraphUtil.getBinaryGraph(man1[i], ref1[i], true);
-//			System.out.println("bg finished...");
-//			int len = Compare.getProperties(src1[0][0]).size()+3;
-//			Vector<Double> theta = VecUtil.getVec(len);
-//			VecUtil.eval(theta, 1);
-//			theta.set( theta.size()-1 , 3.0);
-//			int max_iter = 10;
-//			System.out.println(bg1[i].length+" "+bg1[i][0].length);
-//			for (int m=0; m<max_iter; m++) {
-//				for (int j=0; j<_srcpage.length; j++) {
-//					theta = getTheta(theta, src1[j], ref1[j], bg1[j], 1000,null);
-////					theta = gd(theta, src1[j], ref1[j], bg1[i], 3000);
-//					String info = "";
-//					for(int k=0;k<theta.size();k++){
-//						info+=theta.get(k)+",";
-//					}
-//					System.out.println("grad:" + m + ":" + info);
-//				}
-//			}
-//		}
 		
+		String[] _srcpage = {"tar5"};
+		String[] _refpage = {"ref5"};
 		
+		Elem[][] src1 = new Elem [_srcpage.length][];
+		Elem[][] ref1 = new Elem [_refpage.length][];
+		Elem[][] man1 = new Elem [_srcpage.length][];
+		int[][][] bg1 = new int  [_srcpage.length][][];
 		
-		String srcpage = "tar5";
-		String refpage = "ref5";
-		String srcImg = "img/" + srcpage + ".png";
-		String refImg = "img/" + refpage + ".png";
-		String manual = srcpage+"_"+refpage+"_me";
 		Connection conn = DBConnect.getConnect();
 		
-		Elem[] src = Util.getElemsArray(srcImg, "select * from "+srcpage+"_"+refpage+" where isZero=0", conn);
-		Elem[] ref = Util.getElemsArray(refImg, "select * from "+refpage+" where isZero=0", conn);	
-		Elem[] man = Util.getElemsArray( srcImg, "select * from "+manual+" where isZero=0", conn);
+		for (int i=0; i<_srcpage.length; i++) {
+			String srcImg = "img/" + _srcpage[i] + ".png";
+			String refImg = "img/" + _refpage[i] + ".png";
+			String manual = _srcpage[i]+"_"+ _refpage[i]+"_me";
+			
+//			src1[i] = (Elem[]) Util.getElems(srcImg, "select * from "+_srcpage[i]+"_"+_refpage[i]+" where isZero=0", conn).toArray(new Elem[1]);
+//			ref1[i] = (Elem[]) Util.getElems(refImg, "select * from "+_refpage[i]+" where isZero=0", conn).toArray(new Elem[1]);
+//			man1[i] = (Elem[]) Util.getElems(srcImg, "select * from "+manual+" where isZero=0", conn).toArray(new Elem[1]);
+			
+			
+			src1[i] = Util.getElemsArray(srcImg, "select * from "+_srcpage[i]+"_"+_refpage[i]+" where isZero=0", conn);
+			ref1[i] = Util.getElemsArray(refImg, "select * from "+_refpage[i]+" where isZero=0", conn);
+			man1[i] = Util.getElemsArray(srcImg, "select * from "+manual+" where isZero=0", conn);
+			
+			bg1[i] = GraphUtil.getBinaryGraph(man1[i], ref1[i], true);
+			System.out.println("bg finished...");
+			int len = Compare.getProperties(src1[0][0]).size()+3;
+			Vector<Double> theta = VecUtil.getVec(len);
+			VecUtil.eval(theta, 1);
+			theta.set( theta.size()-1 , 3.0);
+			int max_iter = 10;
+			System.out.println(bg1[i].length+" "+bg1[i][0].length);
+			for (int m=0; m<max_iter; m++) {
+				for (int j=0; j<_srcpage.length; j++) {
+//					theta = getTheta(theta, src1[j], ref1[j], bg1[j], 1000,null);
+					theta = gd_sigmoidWithoutWeight(theta, src1[j], ref1[j], bg1[i], 3000);
+					String info = "";
+					for(int k=0;k<theta.size();k++){
+						info+=theta.get(k)+",";
+					}
+					System.out.println("grad:" + m + ":" + info);
+				}
+			}
+		}
 		
-		test();
-		evaluation_v2(src, man, ref);
+		
+		
+//		String srcpage = "tar5";
+//		String refpage = "ref5";
+//		String srcImg = "img/" + srcpage + ".png";
+//		String refImg = "img/" + refpage + ".png";
+//		String manual = srcpage+"_"+refpage+"_me";
+//		Connection conn = DBConnect.getConnect();
+//		
+//		Elem[] src = Util.getElemsArray(srcImg, "select * from "+srcpage+"_"+refpage+" where isZero=0", conn);
+//		Elem[] ref = Util.getElemsArray(refImg, "select * from "+refpage+" where isZero=0", conn);	
+//		Elem[] man = Util.getElemsArray( srcImg, "select * from "+manual+" where isZero=0", conn);
+//		
+////		test();
+//		evaluation(src, man, ref);
 //		
 		 
 	}
@@ -820,7 +935,7 @@ public class Perceptron {
 //		double[] theta = {4.000845053248746, -4.0810424768944475E-4, -4.0810424768944475E-4, -4.0810424768944475E-4, -4.0810424768944475E-4, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, -4.0810424768944475E-4, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, -4.0810424768944475E-4, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 4.000845053248746, 6.000845053248746}; 
 
 //		double [] theta= {4.501323086381922, 6.400150379495874, -2.169113782552403, 8.07041748726603, -9.241025723039911, -15.855522818602152, -2.9658413633337113, 1.0, 1.0, 13.684717211196691, 1.0, -6.146945540060568, 8.742982952359428, 1.0, -15.249634936346201, -19.0020649723925, -4.9763019500868495, 10.190186839196945, 10.610262299012135, -3.3364258385905465, 4.772523848084024, 1.0, 1.0, 1.0, 1.0, 1.0, -5.464795810437314, 1.0, 6.458838777082993, 6.458838777082993, 11.776871820045557, -0.9244273537661711, 5.434025250303517};
-		double [] theta = {8.680882212353263, 34.373867717118344, 26.817852784685027, 58.732085053074556, -117.26832742375562, -21.531028428904854, -128.88968038202879, 1.0, 1.0, -123.03186466914327, 1.0, -45.890981387648935, 28.14093789783506, 1.0, -385.8631706097662, -123.88197903775067, 86.23637061019961, 67.92665554895228, 92.29544668887722, 26.554725228319125, 18.163720083337076, 3.5689141007523464, 1.0, 1.0, 1.0, 1.0, -52.87280720285459, 1.0, 1.0, 1.0, -9.251469991877059, 1179.5336643898793, 705.1357111911458};
+		double [] theta = {10.01762321484031, 10.614293711186827, 23.172173360156524, 12.955694873526209, -95.83065445389502, -1.9999999999999996, -17.707106781186546, 1.0, 1.0, -15.982535796031625, 1.0, 1.900485404549924, 8.579320725889266, 1.0, -73.72682165426797, -99.1025605604488, 52.30275031981155, -5.455705953211161, 35.18362588599148, -20.39913985139627, -0.7378527712570266, 3.5689141007523464, 1.0, 1.0, 1.0, 1.0, -6.447213595499958, 1.0, 1.0, 1.0, 63.196869960985254, 18.861711752576134, 12.812556457844572};
 		for(int i=0;i<theta.length;i++) {
 			weights.add(theta[i]);
 		}
@@ -859,8 +974,11 @@ public class Perceptron {
 		for(int i=0;i<match.length;i++) {
 			//String tmp = "update "+pre +" set clusterID="+src[i].getId()+" where ID="+src[i].getId();
 			//Util.update(tmp);
-			String sql = "update "+pre+" set matchID = "+match[i]+" where ID="+src[i].getId();
+			if(match[i]>0){
+				String sql = "update "+pre+" set matchCls = "+ref[ElemUtil.getElemIdxById(ref, match[i])].getCid()+" where clusterID="+src[i].getCid();
 			Util.update(sql);
+			}
+			
 		}
 //		evaluation_v2(predict, groundTruth, reference)
 	}
